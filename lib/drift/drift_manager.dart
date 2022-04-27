@@ -8,5 +8,5 @@ class DriftManager {
     return _instance!;
   }
 
-
+//https://stackoverflow.com/questions/58324907/how-to-perform-file-encryption-with-flutter-and-dart
 }

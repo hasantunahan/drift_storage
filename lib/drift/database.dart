@@ -12,6 +12,7 @@ part 'database.g.dart';
 LazyDatabase _openConnection() {
   return LazyDatabase(() async {
     final dir = await getApplicationDocumentsDirectory();
+    log("dir path ${dir.path}");
     final file = File(path.join(dir.path, 'tester.db'));
     return NativeDatabase(file);
   });

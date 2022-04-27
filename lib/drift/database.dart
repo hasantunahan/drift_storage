@@ -4,14 +4,21 @@ import 'dart:io';
 import 'package:drift/drift.dart';
 import 'package:drift/native.dart';
 import 'package:drift_example/drift_model/vehicle_table.dart';
+import 'package:drift_example/encrpty/encrpty.dart';
+import 'package:encrypt/encrypt.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as path;
 
 part 'database.g.dart';
 
 LazyDatabase _openConnection() {
+  final key = Key.fromUtf8('cRfUjXn2r5u8x/A?D(G+KbPeSgVkYp3s');
+  final iv = IV.fromLength(16);
+  final encrypter = Encrypter(AES(key));
+
   return LazyDatabase(() async {
     final dir = await getApplicationDocumentsDirectory();
+    final encrypted = encrypter.encrypt(dir.path, iv: iv);
     log("dir path ${dir.path}");
     final file = File(path.join(dir.path, 'tester.db'));
     return NativeDatabase(file);
@@ -36,13 +43,15 @@ class Db extends _$Db {
 
   Future<Vehicle?> getVehicleById({required String id}) async {
     try {
-      return await (select(vehicleTable)..where((tbl) => tbl.id.equals(id))).getSingleOrNull();
+      return await (select(vehicleTable)..where((tbl) => tbl.id.equals(id)))
+          .getSingleOrNull();
     } catch (e) {
       log("an error get vehicle by id $e");
     }
   }
 
-  Future<bool> updateVehicle(VehicleTableCompanion vehicleTableCompanion) async {
+  Future<bool> updateVehicle(
+      VehicleTableCompanion vehicleTableCompanion) async {
     try {
       return await update(vehicleTable).replace(vehicleTableCompanion);
     } catch (e) {
@@ -51,16 +60,20 @@ class Db extends _$Db {
     }
   }
 
-  Future<int> updateVehicleByVehicle(Vehicle oldItem, VehicleTableCompanion newItem) async {
+  Future<int> updateVehicleByVehicle(
+      Vehicle oldItem, VehicleTableCompanion newItem) async {
     try {
-      return await (update(vehicleTable)..where((tbl) => tbl.id.equals(oldItem.id))).write(newItem);
+      return await (update(vehicleTable)
+            ..where((tbl) => tbl.id.equals(oldItem.id)))
+          .write(newItem);
     } catch (e) {
       log("an error update vehicle where $e");
       return 0;
     }
   }
 
-  Future<bool> updateVehicleItemsByVehicles(List<VehicleTableCompanion> newList) async {
+  Future<bool> updateVehicleItemsByVehicles(
+      List<VehicleTableCompanion> newList) async {
     try {
       await batch((e) {
         e.replaceAll(vehicleTable, newList);
@@ -91,7 +104,8 @@ class Db extends _$Db {
 
   Future<int> deleteVehicles(String id) async {
     try {
-      return await (delete(vehicleTable)..where((tbl) => tbl.id.equals(id))).go();
+      return await (delete(vehicleTable)..where((tbl) => tbl.id.equals(id)))
+          .go();
     } catch (e) {
       return 0;
     }

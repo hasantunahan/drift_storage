@@ -1,8 +1,16 @@
+import 'dart:developer';
+
+import 'package:drift_example/connectivity/connection_manager.dart';
 import 'package:drift_example/drift_test_widget.dart';
 import 'package:flutter/material.dart';
 
 void main() {
   runApp(const MyApp());
+  connectionListening();
+}
+
+Future<void> connectionListening() async {
+  await ConnectionManager.instance.listen();
 }
 
 class MyApp extends StatelessWidget {

@@ -9,7 +9,7 @@ class ConnectionService {
   Future<bool> isReachableNetwork() async {
     try {
       final res = await _http.head(Uri.parse(google));
-      log("resss");
+      log("network done listening...");
       if (res.statusCode == HttpStatus.ok) {
         return true;
       } else {

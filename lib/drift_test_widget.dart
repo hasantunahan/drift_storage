@@ -1,3 +1,5 @@
+import 'dart:async';
+import 'dart:collection';
 import 'dart:convert';
 import 'dart:developer';
 import 'dart:io';
@@ -21,15 +23,58 @@ class DriftTestWidget extends StatefulWidget {
 
 class _DriftTestWidgetState extends State<DriftTestWidget> {
   late Db _db;
+  List<String> willChangeList = <String>[];
+  late StreamSubscription<bool> _subscription;
+  bool connection = false;
 
   @override
   void initState() {
     super.initState();
     _db = Db();
+    addQueque();
+    _subscription = ConnectionManager.instance.connectionController.stream.listen((event) {
+      log("hello $event");
+      if (mounted) {
+        setState(() {
+          connection = event;
+        });
+      }
+    });
+    Future.delayed(Duration(milliseconds: 1000),(){
+
+    });
+    looseConnectionTest();
     //testVehicles();
     //updateTest();
-    _testOnNetworkData();
-    ConnectionManager.instance.listen();
+    /// test 500.000 data {local to network} or {network to local} sync data
+    //_testOnNetworkData();
+  }
+
+  void addQueque() {
+    final list = List.generate(5000000, (index) => "user $index");
+    setState(() {
+      willChangeList = list;
+    });
+  }
+
+  void resetQueque() {
+    setState(() {
+      willChangeList = [];
+    });
+  }
+
+  List<T> updateQueque<T>({required List<T> list, required List<T> completedList}) {
+    List<T> item = list.toSet().difference(completedList.toSet()).toList();
+    setState(() {
+      willChangeList = item as List<String>;
+    });
+    return item;
+  }
+
+  Future<void> looseConnectionTest() async {
+    for (var e in willChangeList) {
+      log(connection.toString());
+    }
   }
 
   Future<List<Vehicle>> dummyNewList() async {
@@ -73,7 +118,7 @@ class _DriftTestWidgetState extends State<DriftTestWidget> {
               userId: "$index user",
               name: "user name $index",
             ));
-    return Future.value([...list1,...list2,...list3]);
+    return Future.value([...list1, ...list2, ...list3]);
   }
 
   Future<List<VehicleTableCompanion>> dummyLocalList() async {
@@ -141,8 +186,7 @@ class _DriftTestWidgetState extends State<DriftTestWidget> {
 
     final searchDate = DateTime.now();
     final map = searchUpdatableList(list, newList);
-    log("SEARCH  :: local length -> ${list!.length} ||| network length -> ${newList.length}, time : ${searchDate
-        .difference(DateTime.now()).inMilliseconds} mls");
+    log("SEARCH  :: local length -> ${list!.length} ||| network length -> ${newList.length}, time : ${searchDate.difference(DateTime.now()).inMilliseconds} mls");
 
     if (map[UPDATE_TYPE.NETWORK_TO_LOCAL] != null) {
       final updateList = map[UPDATE_TYPE.NETWORK_TO_LOCAL]!;

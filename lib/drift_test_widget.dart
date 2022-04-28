@@ -31,49 +31,50 @@ class _DriftTestWidgetState extends State<DriftTestWidget> {
   }
 
   Future<List<Vehicle>> dummyNewList() async {
+    final list1 = List.generate(
+        480000,
+        (index) => Vehicle(
+              id: "$index",
+              status: 0,
+              serialName: index,
+              operationAt: "2022-04-19T14:07:18.795536+03:00",
+              updatedAt: "2022-04-19T14:07:18.795536+03:00",
+              cardNumber: "4455",
+              amount: 135,
+              userId: "$index user",
+              name: "user name $index",
+            ));
     final list2 = List.generate(
         10000,
         (index) => Vehicle(
               id: "${index + 480001}",
               status: 0,
               serialName: index,
-              operationAt: "2022-04-21T09:15:40.928394+03:00",
-              updatedAt: "2022-04-21T09:15:40.928394+03:00",
+              operationAt: "2022-04-22T09:15:40.928394+03:00",
+              updatedAt: "2022-04-22T09:15:40.928394+03:00",
               cardNumber: "4455",
               amount: 135,
               userId: "$index user",
               name: "user name $index",
             ));
-    final list1 = List.generate(
-        10000,
-        (index) => Vehicle(
-              id: "${index + 50000}",
-              status: 0,
-              serialName: index,
-              operationAt: "2022-04-19T14:06:18.795536+03:00",
-              updatedAt: "2022-04-19T14:06:18.795536+03:00",
-              cardNumber: "4455",
-              amount: 135,
-              userId: "$index user",
-              name: "user name $index",
-            ));
+
     final list3 = List.generate(
         10000,
-            (index) => Vehicle(
-          id: "${index + 150000}",
-          status: 0,
-          serialName: index,
-          operationAt: "2022-04-19T14:08:18.795536+03:00",
-          updatedAt: "2022-04-19T14:08:18.795536+03:00",
-          cardNumber: "4455",
-          amount: 135,
-          userId: "$index user",
-          name: "user name $index",
-        ));
-    return Future.value([...list2,...list1,...list3]);
+        (index) => Vehicle(
+              id: "${index + 490002}",
+              status: 0,
+              serialName: index,
+              operationAt: "2022-04-22T08:53:37.342673+03:00",
+              updatedAt: "2022-04-22T08:53:37.342673+03:00",
+              cardNumber: "4455",
+              amount: 135,
+              userId: "$index user",
+              name: "user name $index",
+            ));
+    return Future.value([...list1,...list2,...list3]);
   }
 
-  Future<List<VehicleTableCompanion>> dummylocalList() async {
+  Future<List<VehicleTableCompanion>> dummyLocalList() async {
     final list1 = List.generate(
         480000,
         (index) => VehicleTableCompanion(
@@ -127,7 +128,7 @@ class _DriftTestWidgetState extends State<DriftTestWidget> {
     //final res = await getVehicleListHttp();
     //final newList = await getNewList();
     final newList = await dummyNewList();
-    final res = await dummylocalList();
+    final res = await dummyLocalList();
 
     final date = DateTime.now();
     await _db.insetVehicleList(res);
@@ -159,26 +160,6 @@ class _DriftTestWidgetState extends State<DriftTestWidget> {
         log("update list local to network : ${element.updatedAt}");
       }*/
     }
-
-    //await _db.updateVehicleByVehicle(list.first, const VehicleTableCompanion(name: drift.Value("tunahan")));
-
-    /*List<Vehicle> sliceList = list!
-        .where((element) =>
-            DateTime.parse(element.updatedAt!).difference(DateTime(2022, 4, 21)) > const Duration(seconds: 0))
-        .toList();
-    List<VehicleTableCompanion> companionList = [];
-    for (var element in sliceList) {
-      companionList.add(VehicleTableCompanion(
-          id: drift.Value(element.id),
-          amount: const drift.Value(555),
-          serialName: drift.Value(element.serialName),
-          updatedAt: drift.Value(element.updatedAt)));
-    }
-
-    final date2 = DateTime.now();
-    await _db.updateVehicleItemsByVehicles(companionList);
-    log("UPDATE :: http data add performance ${date2.difference(DateTime.now()).inMilliseconds}");*/
-    //await _db.updateVehicleByVehicle(list.first, const VehicleTableCompanion(name: drift.Value("tunahan")));
   }
 
   Map<UPDATE_TYPE, List> searchUpdatableList(List<Vehicle>? list, List<Vehicle> newList) {
@@ -186,23 +167,34 @@ class _DriftTestWidgetState extends State<DriftTestWidget> {
     Map<UPDATE_TYPE, List> returnMap = {};
     List<VehicleTableCompanion> updateList = [];
     List<Vehicle> updateNetworkList = [];
-    for (var e in list!) {
-      final item = newList.firstWhereOrNull((element) => element.id == e.id);
-      if (item != null) {
-        final compareTime = DateTime.parse(item.updatedAt!).difference(DateTime.parse(e.updatedAt!));
-        if (compareTime.inMilliseconds > 0) {
-          /// network to local items
-          updateList.add(item.toCompanion(false));
-          returnMap.addAll({UPDATE_TYPE.NETWORK_TO_LOCAL: updateList});
-        }
+    if (list != null) {
+      final listDifference = list.toSet().difference(newList.toSet()).toList();
+      final newListDiffrence = newList.toSet().difference(list.toSet()).toList();
 
-        /// local to network items
-        else if (compareTime.inMilliseconds < 0) {
-          updateNetworkList.add(e);
-          returnMap.addAll({UPDATE_TYPE.LOCAL_TO_NETWORK: updateNetworkList});
+      log("item length :::: ${listDifference.length}");
+      log("item2 length :::: ${newListDiffrence.length}");
+
+      for (var e in listDifference) {
+        final item = newListDiffrence.firstWhereOrNull((element) => element.id == e.id);
+        if (item != null) {
+          final compareTime = DateTime.parse(item.updatedAt!).difference(DateTime.parse(e.updatedAt!));
+          if (compareTime.inMilliseconds > 0) {
+            /// network to local items
+            updateList.add(item.toCompanion(false));
+            returnMap.addAll({UPDATE_TYPE.NETWORK_TO_LOCAL: updateList});
+          }
+
+          /// local to network items
+          else if (compareTime.inMilliseconds < 0) {
+            updateNetworkList.add(e);
+            returnMap.addAll({UPDATE_TYPE.LOCAL_TO_NETWORK: updateNetworkList});
+          }
         }
       }
+    } else {
+      return returnMap;
     }
+
     log("finished...");
     return returnMap;
   }

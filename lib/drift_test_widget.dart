@@ -171,9 +171,6 @@ class _DriftTestWidgetState extends State<DriftTestWidget> {
       final listDifference = list.toSet().difference(newList.toSet()).toList();
       final newListDiffrence = newList.toSet().difference(list.toSet()).toList();
 
-      log("item length :::: ${listDifference.length}");
-      log("item2 length :::: ${newListDiffrence.length}");
-
       for (var e in listDifference) {
         final item = newListDiffrence.firstWhereOrNull((element) => element.id == e.id);
         if (item != null) {

@@ -192,17 +192,7 @@ class _DriftTestWidgetState extends State<DriftTestWidget> {
         final compareTime = DateTime.parse(item.updatedAt!).difference(DateTime.parse(e.updatedAt!));
         if (compareTime.inMilliseconds > 0) {
           /// network to local items
-          updateList.add(VehicleTableCompanion(
-            name: drift.Value(item.name),
-            id: drift.Value(item.id),
-            userId: drift.Value(item.userId),
-            updatedAt: drift.Value(item.updatedAt),
-            amount: drift.Value(item.amount),
-            cardNumber: drift.Value(item.cardNumber),
-            operationAt: drift.Value(item.operationAt),
-            serialName: drift.Value(item.serialName),
-            status: drift.Value(item.status),
-          ));
+          updateList.add(item.toCompanion(false));
           returnMap.addAll({UPDATE_TYPE.NETWORK_TO_LOCAL: updateList});
         }
 

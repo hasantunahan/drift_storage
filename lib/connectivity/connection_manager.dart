@@ -1,6 +1,9 @@
 import 'dart:async';
 
-import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:drift_example/connectivity/connectivity_manager.dart';
+import 'package:drift_example/connectivity/service/connection_service.dart';
+
+const listenDuration = Duration(milliseconds: 1500);
 
 class ConnectionManager {
   ConnectionManager._init();
@@ -12,32 +15,28 @@ class ConnectionManager {
     return _instance!;
   }
 
-  bool isConnect = true;
-  final Connectivity _connectivity = Connectivity();
-  late StreamSubscription<ConnectivityResult> _streamSubscription;
+  ConnectionService get _service => ConnectionService();
 
-  Future<bool> isNetworkAvaible() async {
-    ConnectivityResult _result = await _connectivity.checkConnectivity();
-    if (_result == ConnectivityResult.none) {
-      return false;
-    } else {
-      return true;
-    }
+  ConnectivityManager get manager => ConnectivityManager.instance;
+  late Timer _timer;
+  late Stream<bool> connection;
+
+  Future<void> listen() async {
+    await manager.isNetworkAvaible();
+    manager.connectionListener();
+    _timer = Timer.periodic(listenDuration, (timer) {
+      if (ConnectivityManager.instance.isConnect) {
+        _service.isReachableNetwork().then((value) {
+          connection = Stream.value(value);
+        });
+      } else {
+        connection = Stream.value(false);
+      }
+    });
   }
 
-  void connectionListener() {
-    _streamSubscription = _connectivity.onConnectivityChanged.listen(_updateConnectionStatus);
-  }
-
-  void connectionListenerClose() {
-    _streamSubscription.cancel();
-  }
-
-  void _updateConnectionStatus(ConnectivityResult result) {
-    if (result == ConnectivityResult.none) {
-      isConnect = false;
-    } else {
-      isConnect = true;
-    }
+  void closeListener() {
+    ConnectivityManager.instance.connectionListenerClose();
+    _timer.cancel();
   }
 }

@@ -3,7 +3,7 @@ import 'dart:developer';
 import 'dart:io';
 
 import 'package:drift_db_viewer/drift_db_viewer.dart';
-import 'package:drift_example/connectivity/custom_connection_manager.dart';
+import 'package:drift_example/connectivity/connection_manager.dart';
 import 'package:drift_example/drift/database.dart';
 import 'package:flutter/material.dart';
 import 'package:drift/drift.dart' as drift;
@@ -29,7 +29,7 @@ class _DriftTestWidgetState extends State<DriftTestWidget> {
     //testVehicles();
     //updateTest();
     _testOnNetworkData();
-    CustomConnectionManager.instance.listen();
+    ConnectionManager.instance.listen();
   }
 
   Future<List<Vehicle>> dummyNewList() async {

@@ -3,6 +3,7 @@ import 'dart:developer';
 import 'dart:io';
 
 import 'package:drift_db_viewer/drift_db_viewer.dart';
+import 'package:drift_example/connectivity/custom_connection_manager.dart';
 import 'package:drift_example/drift/database.dart';
 import 'package:flutter/material.dart';
 import 'package:drift/drift.dart' as drift;
@@ -28,6 +29,7 @@ class _DriftTestWidgetState extends State<DriftTestWidget> {
     //testVehicles();
     //updateTest();
     _testOnNetworkData();
+    CustomConnectionManager.instance.listen();
   }
 
   Future<List<Vehicle>> dummyNewList() async {
@@ -139,7 +141,8 @@ class _DriftTestWidgetState extends State<DriftTestWidget> {
 
     final searchDate = DateTime.now();
     final map = searchUpdatableList(list, newList);
-    log("SEARCH  :: local length -> ${list!.length} ||| network length -> ${newList.length}  ${searchDate.difference(DateTime.now()).inMilliseconds}");
+    log("SEARCH  :: local length -> ${list!.length} ||| network length -> ${newList.length}, time : ${searchDate
+        .difference(DateTime.now()).inMilliseconds} mls");
 
     if (map[UPDATE_TYPE.NETWORK_TO_LOCAL] != null) {
       final updateList = map[UPDATE_TYPE.NETWORK_TO_LOCAL]!;

@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:developer';
 
 import 'package:drift_example/connectivity/connection_manager.dart';
 import 'package:drift_example/connectivity/service/connection_service.dart';

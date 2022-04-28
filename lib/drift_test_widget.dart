@@ -30,6 +30,93 @@ class _DriftTestWidgetState extends State<DriftTestWidget> {
     _testOnNetworkData();
   }
 
+  Future<List<Vehicle>> dummyNewList() async {
+    final list2 = List.generate(
+        10000,
+        (index) => Vehicle(
+              id: "${index + 480001}",
+              status: 0,
+              serialName: index,
+              operationAt: "2022-04-21T09:15:40.928394+03:00",
+              updatedAt: "2022-04-21T09:15:40.928394+03:00",
+              cardNumber: "4455",
+              amount: 135,
+              userId: "$index user",
+              name: "user name $index",
+            ));
+    final list1 = List.generate(
+        10000,
+        (index) => Vehicle(
+              id: "${index + 50000}",
+              status: 0,
+              serialName: index,
+              operationAt: "2022-04-19T14:06:18.795536+03:00",
+              updatedAt: "2022-04-19T14:06:18.795536+03:00",
+              cardNumber: "4455",
+              amount: 135,
+              userId: "$index user",
+              name: "user name $index",
+            ));
+    final list3 = List.generate(
+        10000,
+            (index) => Vehicle(
+          id: "${index + 150000}",
+          status: 0,
+          serialName: index,
+          operationAt: "2022-04-19T14:08:18.795536+03:00",
+          updatedAt: "2022-04-19T14:08:18.795536+03:00",
+          cardNumber: "4455",
+          amount: 135,
+          userId: "$index user",
+          name: "user name $index",
+        ));
+    return Future.value([...list2,...list1,...list3]);
+  }
+
+  Future<List<VehicleTableCompanion>> dummylocalList() async {
+    final list1 = List.generate(
+        480000,
+        (index) => VehicleTableCompanion(
+              id: drift.Value("$index"),
+              status: const drift.Value(0),
+              serialName: drift.Value(index),
+              operationAt: const drift.Value("2022-04-19T14:07:18.795536+03:00"),
+              updatedAt: const drift.Value("2022-04-19T14:07:18.795536+03:00"),
+              cardNumber: const drift.Value("4455"),
+              amount: const drift.Value(135),
+              userId: drift.Value("$index user"),
+              name: drift.Value("user name $index"),
+            ));
+    final list2 = List.generate(
+        10000,
+        (index) => VehicleTableCompanion(
+              id: drift.Value("${index + 480001}"),
+              status: const drift.Value(0),
+              serialName: drift.Value(index),
+              operationAt: const drift.Value("2022-04-22T09:12:40.928394+03:00"),
+              updatedAt: const drift.Value("2022-04-22T09:12:40.928394+03:00"),
+              cardNumber: const drift.Value("4455"),
+              amount: const drift.Value(135),
+              userId: drift.Value("$index user"),
+              name: drift.Value("user name $index"),
+            ));
+    final list3 = List.generate(
+        10000,
+        (index) => VehicleTableCompanion(
+              id: drift.Value("${index + 490002}"),
+              status: const drift.Value(0),
+              serialName: drift.Value(index),
+              operationAt: const drift.Value("2022-04-22T08:55:37.342673+03:00"),
+              updatedAt: const drift.Value("2022-04-22T08:55:37.342673+03:00"),
+              cardNumber: const drift.Value("4455"),
+              amount: const drift.Value(135),
+              userId: drift.Value("$index user"),
+              name: drift.Value("user name $index"),
+            ));
+    final res = [...list1, ...list2, ...list3];
+    return Future.value(res);
+  }
+
   Future<void> _testOnNetworkData() async {
     if (Platform.isLinux) {
       var result = await Process.run('ls', ['-l']);
@@ -37,13 +124,10 @@ class _DriftTestWidgetState extends State<DriftTestWidget> {
     }
 
     await _db.deleteAll();
-    final res = await getVehicleListHttp();
-    final newList = await getNewList();
-
-    log("its ok");
-    for (var e in res) {
-      log(e.id.value.toString());
-    }
+    //final res = await getVehicleListHttp();
+    //final newList = await getNewList();
+    final newList = await dummyNewList();
+    final res = await dummylocalList();
 
     final date = DateTime.now();
     await _db.insetVehicleList(res);
@@ -52,21 +136,30 @@ class _DriftTestWidgetState extends State<DriftTestWidget> {
     /// get local db list
     List<Vehicle>? list = await _db.getVehicles();
 
+    final searchDate = DateTime.now();
     final map = searchUpdatableList(list, newList);
-    final updateList = map[UPDATE_TYPE.NETWORK_TO_LOCAL]!;
-    for (var element in updateList) {
-      log("update list network to local: ${element.updatedAt.value}");
+    log("SEARCH  :: local length -> ${list!.length} ||| network length -> ${newList.length}  ${searchDate.difference(DateTime.now()).inMilliseconds}");
+
+    if (map[UPDATE_TYPE.NETWORK_TO_LOCAL] != null) {
+      final updateList = map[UPDATE_TYPE.NETWORK_TO_LOCAL]!;
+      log("available network to local length : ${updateList.length}");
+      /*for (var element in updateList) {
+       // log("update list network to local: ${element.updatedAt.value}");
+
+      }*/
+      final date2 = DateTime.now();
+      await _db.updateVehicleItemsByVehicles(updateList as List<VehicleTableCompanion>);
+      log("UPDATE :: update newData performance ${date2.difference(DateTime.now()).inMilliseconds}");
     }
 
-    final updateListNetwork = map[UPDATE_TYPE.LOCAL_TO_NETWORK]!;
-    for (var element in updateListNetwork) {
-      log("update list local to network : ${element.updatedAt}");
+    if (map[UPDATE_TYPE.LOCAL_TO_NETWORK] != null) {
+      final updateListNetwork = map[UPDATE_TYPE.LOCAL_TO_NETWORK]!;
+      log("available local to network length : ${updateListNetwork.length}");
+      /* for (var element in updateListNetwork) {
+        log("update list local to network : ${element.updatedAt}");
+      }*/
     }
 
-    final date2 = DateTime.now();
-    await _db.updateVehicleItemsByVehicles(
-        updateList as List<VehicleTableCompanion>);
-    log("UPDATE :: update newData performance ${date2.difference(DateTime.now()).inMilliseconds}");
     //await _db.updateVehicleByVehicle(list.first, const VehicleTableCompanion(name: drift.Value("tunahan")));
 
     /*List<Vehicle> sliceList = list!
@@ -88,16 +181,15 @@ class _DriftTestWidgetState extends State<DriftTestWidget> {
     //await _db.updateVehicleByVehicle(list.first, const VehicleTableCompanion(name: drift.Value("tunahan")));
   }
 
-  Map<UPDATE_TYPE, List> searchUpdatableList(
-      List<Vehicle>? list, List<Vehicle> newList) {
+  Map<UPDATE_TYPE, List> searchUpdatableList(List<Vehicle>? list, List<Vehicle> newList) {
+    log("searching...");
     Map<UPDATE_TYPE, List> returnMap = {};
     List<VehicleTableCompanion> updateList = [];
     List<Vehicle> updateNetworkList = [];
     for (var e in list!) {
       final item = newList.firstWhereOrNull((element) => element.id == e.id);
       if (item != null) {
-        final compareTime = DateTime.parse(item.updatedAt!)
-            .difference(DateTime.parse(e.updatedAt!));
+        final compareTime = DateTime.parse(item.updatedAt!).difference(DateTime.parse(e.updatedAt!));
         if (compareTime.inMilliseconds > 0) {
           /// network to local items
           updateList.add(VehicleTableCompanion(
@@ -121,13 +213,13 @@ class _DriftTestWidgetState extends State<DriftTestWidget> {
         }
       }
     }
+    log("finished...");
     return returnMap;
   }
 
   Future<List<VehicleTableCompanion>> getVehicleListHttp() async {
     List<VehicleTableCompanion> companionList = [];
-    final res =
-        await _http.get(Uri.parse("http://localhost:8080/macaron.json"));
+    final res = await _http.get(Uri.parse("http://localhost:8080/macaron.json"));
     if (res.statusCode == 200) {
       var decodedResponse = jsonDecode(utf8.decode(res.bodyBytes)) as List;
       for (var element in decodedResponse) {
@@ -141,8 +233,7 @@ class _DriftTestWidgetState extends State<DriftTestWidget> {
 
   Future<List<Vehicle>> getNewList() async {
     List<Vehicle> companionList = [];
-    final res =
-        await _http.get(Uri.parse("http://localhost:8080/newList.json"));
+    final res = await _http.get(Uri.parse("http://localhost:8080/newList.json"));
     if (res.statusCode == 200) {
       var decodedResponse = jsonDecode(utf8.decode(res.bodyBytes)) as List;
       for (var element in decodedResponse) {
@@ -164,9 +255,7 @@ class _DriftTestWidgetState extends State<DriftTestWidget> {
     await _db.insetVehicleList(allList);*/
     List<Vehicle>? list = await _db.getVehicles();
     List<Vehicle> sliceList = list!
-        .where((element) =>
-            DateTime.parse(element.updatedAt!).difference(DateTime.now()) >
-            const Duration(seconds: 0))
+        .where((element) => DateTime.parse(element.updatedAt!).difference(DateTime.now()) > const Duration(seconds: 0))
         .toList();
     List<VehicleTableCompanion> companionList = [];
     for (var element in sliceList) {

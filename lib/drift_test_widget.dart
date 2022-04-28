@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:developer';
+import 'dart:io';
 
 import 'package:drift_db_viewer/drift_db_viewer.dart';
 import 'package:drift_example/drift/database.dart';
@@ -30,6 +31,11 @@ class _DriftTestWidgetState extends State<DriftTestWidget> {
   }
 
   Future<void> _testOnNetworkData() async {
+    if (Platform.isLinux) {
+      var result = await Process.run('ls', ['-l']);
+      print(result.stdout);
+    }
+
     await _db.deleteAll();
     final res = await getVehicleListHttp();
     final newList = await getNewList();
@@ -58,7 +64,8 @@ class _DriftTestWidgetState extends State<DriftTestWidget> {
     }
 
     final date2 = DateTime.now();
-    await _db.updateVehicleItemsByVehicles(updateList as List<VehicleTableCompanion>);
+    await _db.updateVehicleItemsByVehicles(
+        updateList as List<VehicleTableCompanion>);
     log("UPDATE :: update newData performance ${date2.difference(DateTime.now()).inMilliseconds}");
     //await _db.updateVehicleByVehicle(list.first, const VehicleTableCompanion(name: drift.Value("tunahan")));
 
@@ -81,14 +88,16 @@ class _DriftTestWidgetState extends State<DriftTestWidget> {
     //await _db.updateVehicleByVehicle(list.first, const VehicleTableCompanion(name: drift.Value("tunahan")));
   }
 
-  Map<UPDATE_TYPE, List> searchUpdatableList(List<Vehicle>? list, List<Vehicle> newList) {
+  Map<UPDATE_TYPE, List> searchUpdatableList(
+      List<Vehicle>? list, List<Vehicle> newList) {
     Map<UPDATE_TYPE, List> returnMap = {};
     List<VehicleTableCompanion> updateList = [];
     List<Vehicle> updateNetworkList = [];
     for (var e in list!) {
       final item = newList.firstWhereOrNull((element) => element.id == e.id);
       if (item != null) {
-        final compareTime = DateTime.parse(item.updatedAt!).difference(DateTime.parse(e.updatedAt!));
+        final compareTime = DateTime.parse(item.updatedAt!)
+            .difference(DateTime.parse(e.updatedAt!));
         if (compareTime.inMilliseconds > 0) {
           /// network to local items
           updateList.add(VehicleTableCompanion(
@@ -117,7 +126,8 @@ class _DriftTestWidgetState extends State<DriftTestWidget> {
 
   Future<List<VehicleTableCompanion>> getVehicleListHttp() async {
     List<VehicleTableCompanion> companionList = [];
-    final res = await _http.get(Uri.parse("http://localhost:8080/macaron.json"));
+    final res =
+        await _http.get(Uri.parse("http://localhost:8080/macaron.json"));
     if (res.statusCode == 200) {
       var decodedResponse = jsonDecode(utf8.decode(res.bodyBytes)) as List;
       for (var element in decodedResponse) {
@@ -131,7 +141,8 @@ class _DriftTestWidgetState extends State<DriftTestWidget> {
 
   Future<List<Vehicle>> getNewList() async {
     List<Vehicle> companionList = [];
-    final res = await _http.get(Uri.parse("http://localhost:8080/newList.json"));
+    final res =
+        await _http.get(Uri.parse("http://localhost:8080/newList.json"));
     if (res.statusCode == 200) {
       var decodedResponse = jsonDecode(utf8.decode(res.bodyBytes)) as List;
       for (var element in decodedResponse) {
@@ -153,7 +164,9 @@ class _DriftTestWidgetState extends State<DriftTestWidget> {
     await _db.insetVehicleList(allList);*/
     List<Vehicle>? list = await _db.getVehicles();
     List<Vehicle> sliceList = list!
-        .where((element) => DateTime.parse(element.updatedAt!).difference(DateTime.now()) > const Duration(seconds: 0))
+        .where((element) =>
+            DateTime.parse(element.updatedAt!).difference(DateTime.now()) >
+            const Duration(seconds: 0))
         .toList();
     List<VehicleTableCompanion> companionList = [];
     for (var element in sliceList) {

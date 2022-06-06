@@ -5,7 +5,6 @@ import 'dart:developer';
 import 'dart:io';
 
 import 'package:drift_db_viewer/drift_db_viewer.dart';
-import 'package:drift_example/connectivity/connection_manager.dart';
 import 'package:drift_example/drift/database.dart';
 import 'package:flutter/material.dart';
 import 'package:drift/drift.dart' as drift;
@@ -32,22 +31,11 @@ class _DriftTestWidgetState extends State<DriftTestWidget> {
     super.initState();
     _db = Db();
     addQueque();
-    _subscription = ConnectionManager.instance.connectionController.stream.listen((event) {
-      log("hello $event");
-      if (mounted) {
-        setState(() {
-          connection = event;
-        });
-      }
-    });
-    Future.delayed(Duration(milliseconds: 1000),(){
 
-    });
-    looseConnectionTest();
     //testVehicles();
     //updateTest();
     /// test 500.000 data {local to network} or {network to local} sync data
-    //_testOnNetworkData();
+    _testOnNetworkData();
   }
 
   void addQueque() {

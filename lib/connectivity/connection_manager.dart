@@ -23,7 +23,7 @@ class ConnectionManager {
   final StreamController<bool> connectionController = StreamController<bool>();
 
   Future<void> listen() async {
-    await manager.isNetworkAvaible();
+     await manager.isNetworkAvaible();
     manager.connectionListener();
     _timer = Timer.periodic(listenDuration, (timer) {
       if (ConnectivityManager.instance.isConnect) {

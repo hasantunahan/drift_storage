@@ -15,7 +15,7 @@ LazyDatabase _openConnection() {
   final key = Key.fromUtf8('cRfUjXn2r5u8x/A?D(G+KbPeSgVkYp3s');
   final iv = IV.fromLength(16);
   final encrypter = Encrypter(AES(key));
-  final driftname = "drift.db";
+  const driftname = "drift.db";
 
   return LazyDatabase(() async {
     final dir = await getApplicationDocumentsDirectory();

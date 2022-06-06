@@ -6,11 +6,11 @@ import 'package:flutter/material.dart';
 
 void main() {
   runApp(const MyApp());
-  connectionListening();
+ // connectionListening();
 }
 
 Future<void> connectionListening() async {
-  await ConnectionManager.instance.listen();
+  //await ConnectionManager.instance.listen();
 }
 
 class MyApp extends StatelessWidget {

@@ -1,7 +1,10 @@
 import 'package:drift/drift.dart';
+import 'package:drift_example/manager/base_table.dart';
 
 @DataClassName("Vehicle")
-class VehicleTable extends Table {
+class VehicleTable extends Table with BaseTable{
+
+  @override
   TextColumn get id => text()();
 
   IntColumn get serialName => integer().nullable()();
@@ -26,4 +29,5 @@ class VehicleTable extends Table {
 
   @override
   Set<Column> get primaryKey => {id};
+
 }

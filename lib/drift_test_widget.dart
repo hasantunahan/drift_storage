@@ -6,6 +6,7 @@ import 'dart:io';
 
 import 'package:drift_db_viewer/drift_db_viewer.dart';
 import 'package:drift_example/drift/database.dart';
+import 'package:drift_example/manager/db_manager.dart';
 import 'package:flutter/material.dart';
 import 'package:drift/drift.dart' as drift;
 import 'package:http/http.dart' as _http;
@@ -158,20 +159,25 @@ class _DriftTestWidgetState extends State<DriftTestWidget> {
       var result = await Process.run('ls', ['-l']);
       print(result.stdout);
     }
+    final _dbManager = DataBaseManager<VehicleTableCompanion, Vehicle, $VehicleTableTable>(_db);
 
-    await _db.deleteAll();
+    ///await _db.deleteAll();
+    await _dbManager.deleteAll();
+
     //final res = await getVehicleListHttp();
     //final newList = await getNewList();
     final newList = await dummyNewList();
     final res = await dummyLocalList();
 
     final date = DateTime.now();
-    await _db.insetVehicleList(res);
+
+    /// await _db.insetVehicleList(res);
+    await _dbManager.insertItemList(res);
     log("ADD :: http data add performance ${date.difference(DateTime.now()).inMilliseconds}");
 
     /// get local db list
-    List<Vehicle>? list = await _db.getVehicles();
-
+    ///List<Vehicle>? list = await _db.getVehicles();
+    List<Vehicle>? list = await _dbManager.getItems();
     final searchDate = DateTime.now();
     final map = searchUpdatableList(list, newList);
     log("SEARCH  :: local length -> ${list!.length} ||| network length -> ${newList.length}, time : ${searchDate.difference(DateTime.now()).inMilliseconds} mls");
@@ -184,7 +190,9 @@ class _DriftTestWidgetState extends State<DriftTestWidget> {
 
       }*/
       final date2 = DateTime.now();
-      await _db.updateVehicleItemsByVehicles(updateList as List<VehicleTableCompanion>);
+
+      ///await _db.updateVehicleItemsByVehicles(updateList as List<VehicleTableCompanion>);
+      await _dbManager.updateItemsByItems(updateList as List<VehicleTableCompanion>);
       log("UPDATE :: update newData performance ${date2.difference(DateTime.now()).inMilliseconds}");
     }
 
@@ -260,14 +268,15 @@ class _DriftTestWidgetState extends State<DriftTestWidget> {
   }
 
   Future<void> updateTest() async {
-    await _db.deleteAll();
+    ///await _db.deleteAll();
+    final _dbManager = DataBaseManager<VehicleTableCompanion, Vehicle, $VehicleTableTable>(_db);
     /*final allList = List.generate(
         5000,
         (index) => VehicleTableCompanion.insert(
             name: "user $index", serialName: index, updateAt: DateTime.now().add(Duration(milliseconds: index))));
 
     await _db.insetVehicleList(allList);*/
-    List<Vehicle>? list = await _db.getVehicles();
+    List<Vehicle>? list = await _dbManager.getItems();
     List<Vehicle> sliceList = list!
         .where((element) => DateTime.parse(element.updatedAt!).difference(DateTime.now()) > const Duration(seconds: 0))
         .toList();
@@ -280,12 +289,16 @@ class _DriftTestWidgetState extends State<DriftTestWidget> {
     }
 
     //await _db.updateVehicleByVehicle(list.first, const VehicleTableCompanion(name: drift.Value("tunahan")));
-    await _db.updateVehicleItemsByVehicles(companionList);
+    ///await _db.updateVehicleItemsByVehicles(companionList);
+    await _dbManager.updateItemsByItems(companionList);
     readVehicles();
   }
 
   Future<void> readVehicles() async {
-    List<Vehicle>? _list = await _db.getVehicles();
+    final _dbManager = DataBaseManager<VehicleTableCompanion, Vehicle, $VehicleTableTable>(_db);
+
+    /// List<Vehicle>? _list = await _db.getVehicles();
+    List<Vehicle>? _list = await _dbManager.getItems();
     /*if (_list != null) {
       for (var element in _list) {
         log("read item :  ${element.name}");
@@ -294,13 +307,17 @@ class _DriftTestWidgetState extends State<DriftTestWidget> {
   }
 
   Future<void> testVehicles() async {
+    final _dbManager = DataBaseManager<VehicleTableCompanion, Vehicle, $VehicleTableTable>(_db);
+
     const vehicles = VehicleTableCompanion(
       name: drift.Value("hasan tunahan"),
     );
     await Future.delayed(const Duration(seconds: 1));
 
     final date = DateTime.now();
-    await _db.insertVehicle(vehicles);
+
+    ///await _db.insertVehicle(vehicles);
+    await _dbManager.insertItem(vehicles);
     log("ADD :: vehicle performance ${date.difference(DateTime.now()).inMilliseconds}");
 
     /* final date1 = DateTime.now();
@@ -317,11 +334,15 @@ class _DriftTestWidgetState extends State<DriftTestWidget> {
     log("READ :: vehicle list read performance ${date3.difference(DateTime.now()).inMilliseconds}");
 
     final date4 = DateTime.now();
-    await _db.getVehicleById(id: "100001");
+
+    ///await _db.getVehicleById(id: "100001");
+    await _dbManager.getItemsById(id: "100001");
     log("READ :: vehicle by id read performance ${date4.difference(DateTime.now()).inMilliseconds}");
 
     final date5 = DateTime.now();
-    await _db.deleteAll();
+
+    /// await _db.deleteAll();
+    await _dbManager.deleteAll();
     log("DELETE :: vehicle list delete performance ${date5.difference(DateTime.now()).inMilliseconds}");
   }
 

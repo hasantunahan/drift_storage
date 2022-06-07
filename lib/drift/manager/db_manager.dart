@@ -2,10 +2,10 @@ import 'dart:developer';
 
 import 'package:drift/drift.dart';
 import 'package:drift_example/drift/database.dart';
-import 'package:drift_example/manager/base_table.dart';
-import 'package:drift_example/manager/i_db_manager.dart';
+import 'package:drift_example/drift/manager/base_table.dart';
+import 'package:drift_example/drift/manager/i_db_manager.dart';
 
-class DataBaseManager<T , K , R extends BaseTable> extends IDBManager<T, K, R> {
+class DataBaseManager<T, K, R extends BaseTable> extends IDBManager<T, K, R> {
   final Db database;
   late TableInfo<R, K> table;
   DataBaseManager(this.database) {
@@ -46,13 +46,14 @@ class DataBaseManager<T , K , R extends BaseTable> extends IDBManager<T, K, R> {
     }
   }
 
+  /// TODO : oldItemId remove and then oldItem.id ????
   @override
-  Future<int> updateItemByItem(K oldItem, T newItem,String? oldItemId) async {
+  Future<int> updateItemByItem(K oldItem, T newItem, String? oldItemId) async {
     try {
       return await (database.update(table)
             ..where((tbl) {
-                  final _table = tbl;
-                  return _table.id!.equals(oldItemId);
+              final _table = tbl;
+              return _table.id!.equals(oldItemId);
             }))
           .write(newItem as Insertable<K>);
     } catch (e) {
@@ -79,7 +80,6 @@ class DataBaseManager<T , K , R extends BaseTable> extends IDBManager<T, K, R> {
     return await database.into(table).insert(insert as Insertable<K>);
   }
 
-  /// [insertAll] , [VehicleTableCompanion.insert(),....]
   @override
   Future<bool> insertItemList(List<T> list) async {
     try {
@@ -116,4 +116,3 @@ class DataBaseManager<T , K , R extends BaseTable> extends IDBManager<T, K, R> {
     }
   }
 }
-

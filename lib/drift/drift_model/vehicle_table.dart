@@ -1,5 +1,5 @@
 import 'package:drift/drift.dart';
-import 'package:drift_example/manager/base_table.dart';
+import 'package:drift_example/drift/manager/base_table.dart';
 
 @DataClassName("Vehicle")
 class VehicleTable extends Table with BaseTable{

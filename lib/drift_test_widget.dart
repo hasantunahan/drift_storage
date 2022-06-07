@@ -1,18 +1,15 @@
 import 'dart:async';
-import 'dart:collection';
-import 'dart:convert';
 import 'dart:developer';
 import 'dart:io';
 
 import 'package:drift_db_viewer/drift_db_viewer.dart';
 import 'package:drift_example/drift/database.dart';
-import 'package:drift_example/manager/db_manager.dart';
+import 'package:drift_example/drift/manager/db_manager.dart';
 import 'package:flutter/material.dart';
 import 'package:drift/drift.dart' as drift;
-import 'package:http/http.dart' as _http;
 import "package:collection/collection.dart" show IterableExtension;
 
-enum UPDATE_TYPE { LOCAL_TO_NETWORK, NETWORK_TO_LOCAL }
+enum UPDATE_TYPE { localToNetwork, networkToLocal }
 
 class DriftTestWidget extends StatefulWidget {
   const DriftTestWidget({Key? key}) : super(key: key);
@@ -24,18 +21,12 @@ class DriftTestWidget extends StatefulWidget {
 class _DriftTestWidgetState extends State<DriftTestWidget> {
   late Db _db;
   List<String> willChangeList = <String>[];
-  late StreamSubscription<bool> _subscription;
-  bool connection = false;
 
   @override
   void initState() {
     super.initState();
     _db = Db();
     addQueque();
-
-    //testVehicles();
-    //updateTest();
-    /// test 500.000 data {local to network} or {network to local} sync data
     _testOnNetworkData();
   }
 
@@ -58,12 +49,6 @@ class _DriftTestWidgetState extends State<DriftTestWidget> {
       willChangeList = item as List<String>;
     });
     return item;
-  }
-
-  Future<void> looseConnectionTest() async {
-    for (var e in willChangeList) {
-      log(connection.toString());
-    }
   }
 
   Future<List<Vehicle>> dummyNewList() async {
@@ -157,15 +142,13 @@ class _DriftTestWidgetState extends State<DriftTestWidget> {
   Future<void> _testOnNetworkData() async {
     if (Platform.isLinux) {
       var result = await Process.run('ls', ['-l']);
-      print(result.stdout);
+      log(result.stdout);
     }
     final _dbManager = DataBaseManager<VehicleTableCompanion, Vehicle, $VehicleTableTable>(_db);
 
     ///await _db.deleteAll();
     await _dbManager.deleteAll();
 
-    //final res = await getVehicleListHttp();
-    //final newList = await getNewList();
     final newList = await dummyNewList();
     final res = await dummyLocalList();
 
@@ -182,26 +165,20 @@ class _DriftTestWidgetState extends State<DriftTestWidget> {
     final map = searchUpdatableList(list, newList);
     log("SEARCH  :: local length -> ${list!.length} ||| network length -> ${newList.length}, time : ${searchDate.difference(DateTime.now()).inMilliseconds} mls");
 
-    if (map[UPDATE_TYPE.NETWORK_TO_LOCAL] != null) {
-      final updateList = map[UPDATE_TYPE.NETWORK_TO_LOCAL]!;
+    if (map[UPDATE_TYPE.networkToLocal] != null) {
+      final updateList = map[UPDATE_TYPE.networkToLocal]!;
       log("available network to local length : ${updateList.length}");
-      /*for (var element in updateList) {
-       // log("update list network to local: ${element.updatedAt.value}");
 
-      }*/
       final date2 = DateTime.now();
-
       ///await _db.updateVehicleItemsByVehicles(updateList as List<VehicleTableCompanion>);
       await _dbManager.updateItemsByItems(updateList as List<VehicleTableCompanion>);
       log("UPDATE :: update newData performance ${date2.difference(DateTime.now()).inMilliseconds}");
     }
 
-    if (map[UPDATE_TYPE.LOCAL_TO_NETWORK] != null) {
-      final updateListNetwork = map[UPDATE_TYPE.LOCAL_TO_NETWORK]!;
+    if (map[UPDATE_TYPE.localToNetwork] != null) {
+      final updateListNetwork = map[UPDATE_TYPE.localToNetwork]!;
       log("available local to network length : ${updateListNetwork.length}");
-      /* for (var element in updateListNetwork) {
-        log("update list local to network : ${element.updatedAt}");
-      }*/
+
     }
   }
 
@@ -221,13 +198,13 @@ class _DriftTestWidgetState extends State<DriftTestWidget> {
           if (compareTime.inMilliseconds > 0) {
             /// network to local items
             updateList.add(item.toCompanion(false));
-            returnMap.addAll({UPDATE_TYPE.NETWORK_TO_LOCAL: updateList});
+            returnMap.addAll({UPDATE_TYPE.networkToLocal: updateList});
           }
 
           /// local to network items
           else if (compareTime.inMilliseconds < 0) {
             updateNetworkList.add(e);
-            returnMap.addAll({UPDATE_TYPE.LOCAL_TO_NETWORK: updateNetworkList});
+            returnMap.addAll({UPDATE_TYPE.localToNetwork: updateNetworkList});
           }
         }
       }
@@ -237,113 +214,6 @@ class _DriftTestWidgetState extends State<DriftTestWidget> {
 
     log("finished...");
     return returnMap;
-  }
-
-  Future<List<VehicleTableCompanion>> getVehicleListHttp() async {
-    List<VehicleTableCompanion> companionList = [];
-    final res = await _http.get(Uri.parse("http://localhost:8080/macaron.json"));
-    if (res.statusCode == 200) {
-      var decodedResponse = jsonDecode(utf8.decode(res.bodyBytes)) as List;
-      for (var element in decodedResponse) {
-        companionList.add(Vehicle.fromJson(element).toCompanion(false));
-      }
-      return companionList;
-    } else {
-      return [];
-    }
-  }
-
-  Future<List<Vehicle>> getNewList() async {
-    List<Vehicle> companionList = [];
-    final res = await _http.get(Uri.parse("http://localhost:8080/newList.json"));
-    if (res.statusCode == 200) {
-      var decodedResponse = jsonDecode(utf8.decode(res.bodyBytes)) as List;
-      for (var element in decodedResponse) {
-        companionList.add(Vehicle.fromJson(element));
-      }
-      return companionList;
-    } else {
-      return [];
-    }
-  }
-
-  Future<void> updateTest() async {
-    ///await _db.deleteAll();
-    final _dbManager = DataBaseManager<VehicleTableCompanion, Vehicle, $VehicleTableTable>(_db);
-    /*final allList = List.generate(
-        5000,
-        (index) => VehicleTableCompanion.insert(
-            name: "user $index", serialName: index, updateAt: DateTime.now().add(Duration(milliseconds: index))));
-
-    await _db.insetVehicleList(allList);*/
-    List<Vehicle>? list = await _dbManager.getItems();
-    List<Vehicle> sliceList = list!
-        .where((element) => DateTime.parse(element.updatedAt!).difference(DateTime.now()) > const Duration(seconds: 0))
-        .toList();
-    List<VehicleTableCompanion> companionList = [];
-    for (var element in sliceList) {
-      companionList.add(VehicleTableCompanion(
-          name: const drift.Value("hasantunahan"),
-          serialName: drift.Value(element.serialName),
-          updatedAt: drift.Value(element.updatedAt)));
-    }
-
-    //await _db.updateVehicleByVehicle(list.first, const VehicleTableCompanion(name: drift.Value("tunahan")));
-    ///await _db.updateVehicleItemsByVehicles(companionList);
-    await _dbManager.updateItemsByItems(companionList);
-    readVehicles();
-  }
-
-  Future<void> readVehicles() async {
-    final _dbManager = DataBaseManager<VehicleTableCompanion, Vehicle, $VehicleTableTable>(_db);
-
-    /// List<Vehicle>? _list = await _db.getVehicles();
-    List<Vehicle>? _list = await _dbManager.getItems();
-    /*if (_list != null) {
-      for (var element in _list) {
-        log("read item :  ${element.name}");
-      }
-    }*/
-  }
-
-  Future<void> testVehicles() async {
-    final _dbManager = DataBaseManager<VehicleTableCompanion, Vehicle, $VehicleTableTable>(_db);
-
-    const vehicles = VehicleTableCompanion(
-      name: drift.Value("hasan tunahan"),
-    );
-    await Future.delayed(const Duration(seconds: 1));
-
-    final date = DateTime.now();
-
-    ///await _db.insertVehicle(vehicles);
-    await _dbManager.insertItem(vehicles);
-    log("ADD :: vehicle performance ${date.difference(DateTime.now()).inMilliseconds}");
-
-    /* final date1 = DateTime.now();
-    List<VehicleTableCompanion> vehicleCompanionList = List.generate(1100000,
-        (index) => VehicleTableCompanion.insert(name: "$index hasan", serialName: index, updateAt: DateTime.now()));
-    log("LIST GENERATE :: vehicle list generate performance ${date1.difference(DateTime.now()).inMilliseconds}");
-*/
-    /* final date2 = DateTime.now();
-    await _db.insetVehicleList(vehicleCompanionList);
-    log("ADD :: vehicle list performance ${date2.difference(DateTime.now()).inMilliseconds}");
-*/
-    final date3 = DateTime.now();
-    await readVehicles();
-    log("READ :: vehicle list read performance ${date3.difference(DateTime.now()).inMilliseconds}");
-
-    final date4 = DateTime.now();
-
-    ///await _db.getVehicleById(id: "100001");
-    await _dbManager.getItemsById(id: "100001");
-    log("READ :: vehicle by id read performance ${date4.difference(DateTime.now()).inMilliseconds}");
-
-    final date5 = DateTime.now();
-
-    /// await _db.deleteAll();
-    await _dbManager.deleteAll();
-    log("DELETE :: vehicle list delete performance ${date5.difference(DateTime.now()).inMilliseconds}");
   }
 
   @override

@@ -5,6 +5,11 @@ import 'package:drift_example/drift/database.dart';
 import 'package:drift_example/drift/manager/base_table.dart';
 import 'package:drift_example/drift/manager/i_db_manager.dart';
 
+/// T model eg. VehicleTblCompanion
+///
+/// K model eg. VehicleTbl
+///
+/// R model eg. $VehicleTblTable
 class DataBaseManager<T, K, R extends BaseTable> extends IDBManager<T, K, R> {
   final Db database;
   late TableInfo<R, K> table;
